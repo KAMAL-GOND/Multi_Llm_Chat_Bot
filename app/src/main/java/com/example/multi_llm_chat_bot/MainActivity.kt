@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.multi_llm_chat_bot.SCREEN.InteractionScreen
 import com.example.multi_llm_chat_bot.ui.theme.Multi_Llm_Chat_BotTheme
 import kotlinx.coroutines.launch
 
@@ -23,15 +24,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         //val scope= CoroutineScope(Dispatchers.IO)
-        setContent {
-            Multi_Llm_Chat_BotTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+        val veiwModel= chatBotVeiwModel()
+       setContent {
+           InteractionScreen(veiwModel)
+//            Multi_Llm_Chat_BotTheme {
+//                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+//                    Greeting(
+//                        name = "Android",
+//                        modifier = Modifier.padding(innerPadding)
+//                    )
+//                }
+//            }
         }
     }
 }

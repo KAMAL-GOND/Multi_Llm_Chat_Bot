@@ -65,6 +65,7 @@ dependencies {
     implementation("io.ktor:ktor-client-logging-jvm:+")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    //implementation("androidx.compose.material3:material3:1.4.0-alpha14")
 
 
 }
