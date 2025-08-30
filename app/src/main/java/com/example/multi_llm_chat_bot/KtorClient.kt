@@ -23,7 +23,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 
 object KtorClient {
-    val apiKey=""
+    val apiKey="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"
     val httpClient = HttpClient(CIO) {
         expectSuccess=true;
         install(ContentNegotiation){
