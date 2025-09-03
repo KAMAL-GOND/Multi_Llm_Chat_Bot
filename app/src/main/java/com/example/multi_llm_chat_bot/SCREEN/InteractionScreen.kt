@@ -102,6 +102,8 @@ fun InteractionScreen(viewModel: chatBotVeiwModel) {
 
 ////
 ////        topBar = {
+
+
 ////            TopAppBar(
 ////                title = { Text(currentModel) },
 ////                colors = TopAppBarDefaults.topAppBarColors(
