@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
    // kotlin("jvm") version "2.2.10"
-    kotlin("plugin.serialization") version "2.2.10"
+    kotlin("plugin.serialization") version "+"
     id("com.google.devtools.ksp")
 }
 
@@ -43,6 +43,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.runtime.livedata)
     val room_version = "2.7.2"
 
     implementation(libs.androidx.core.ktx)

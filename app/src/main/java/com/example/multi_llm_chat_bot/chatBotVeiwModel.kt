@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.multi_llm_chat_bot.LocalStorage.AppDatabase
+import com.example.multi_llm_chat_bot.LocalStorage.Conversation
 import com.example.multi_llm_chat_bot.Model.OpenRouterResponse
 import io.ktor.http.ContentType
 import kotlinx.coroutines.delay
@@ -29,6 +30,7 @@ class chatBotVeiwModel(db: AppDatabase) : ViewModel() {
         val state= _state.asStateFlow()
         var active=kotlinx.coroutines.Job(null)
         fun getAnswer(model : String , question : String){
+
             var active=viewModelScope.launch {
                 _state.update {
                     it.copy(isLoading = true,)
@@ -41,7 +43,9 @@ class chatBotVeiwModel(db: AppDatabase) : ViewModel() {
                             response = answer ,
                             error = null
                         )
+
                         }
+                        chatDao.insertConversation(Conversation(title = question))
                         break
                     }
                     catch (e: Exception){
@@ -55,6 +59,7 @@ class chatBotVeiwModel(db: AppDatabase) : ViewModel() {
 
 
         }
+    fun getAllConversation() = chatDao.getAllConversations()
 
     }
     data class appState(
