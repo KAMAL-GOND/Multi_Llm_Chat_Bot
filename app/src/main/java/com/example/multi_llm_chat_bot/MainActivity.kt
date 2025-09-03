@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.multi_llm_chat_bot.LocalStorage.AppDatabase
 import com.example.multi_llm_chat_bot.SCREEN.InteractionScreen
 import com.example.multi_llm_chat_bot.ui.theme.Multi_Llm_Chat_BotTheme
 import kotlinx.coroutines.launch
@@ -22,9 +23,11 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        var db = AppDatabase.getDatabase(this)
+        var chatDao = db.chatDao()
         enableEdgeToEdge()
         //val scope= CoroutineScope(Dispatchers.IO)
-        val veiwModel= chatBotVeiwModel()
+        val veiwModel= chatBotVeiwModel(db)
        setContent {
            InteractionScreen(veiwModel)
 //            Multi_Llm_Chat_BotTheme {

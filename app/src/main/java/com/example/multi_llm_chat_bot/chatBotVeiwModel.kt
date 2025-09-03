@@ -1,9 +1,14 @@
 package com.example.multi_llm_chat_bot
 
 //import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.multi_llm_chat_bot.LocalStorage.AppDatabase
 import com.example.multi_llm_chat_bot.Model.OpenRouterResponse
+import io.ktor.http.ContentType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +16,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-class chatBotVeiwModel : ViewModel() {
+class chatBotVeiwModel(db: AppDatabase) : ViewModel() {
+    var chatDao = db.chatDao()
+    // var chatbot1= AppDatabase.getDatabase(this.)
+
         val _state= MutableStateFlow(appState(
             isLoading = false,
             response = null,
