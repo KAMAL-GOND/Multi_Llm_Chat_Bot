@@ -1,5 +1,6 @@
 package com.example.multi_llm_chat_bot.SCREEN
 
+import android.util.Log
 import androidx.compose.animation.slideOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,9 +42,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -56,6 +59,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.LiveData
+import com.example.multi_llm_chat_bot.LocalStorage.ChatMessage
 import com.example.multi_llm_chat_bot.LocalStorage.Conversation
 import com.example.multi_llm_chat_bot.chatBotVeiwModel
 import kotlinx.coroutines.launch
@@ -69,23 +74,53 @@ fun InteractionScreen(viewModel: chatBotVeiwModel) {
     var question by remember { mutableStateOf("") }
     var ShownQuestion by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
+    var drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    var scope = rememberCoroutineScope()
+    var thisConverastionId by remember { mutableStateOf(0L) }
     var conversationList : List<Conversation> =viewModel.getAllConversation().observeAsState(emptyList()).value
+    var messages by remember { mutableStateOf<LiveData<List<ChatMessage>>?>(null) }
+    var Realmessages =  viewModel.getMessages(thisConverastionId).observeAsState(emptyList()).value
+    Log.d("check","Real message"+ Realmessages.toString())
+    Log.d("check","default conversation"+ conversationList.toString())
+    Log.d("check","current conversation"+ thisConverastionId.toString())
+
+
+
+
+//    LaunchedEffect(thisConverastionId) {
+//        if (thisConverastionId != 0L) {
+//           messages = viewModel.getMessages(thisConverastionId)
+//            Realmessages = messages!!.observeAsState(emptyList()).value
+//        }
+//
+//    }
+//    if (messages != null) {
+//        Realmessages = messages!!.observeAsState(emptyList()).value
+//    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
                 Spacer(Modifier.height(16.dp))
-                Text("conversations", modifier = Modifier.padding(16.dp))
+                Text(" New Chat", modifier = Modifier
+                    .padding(16.dp)
+                    .clickable(onClick = { thisConverastionId = 0L }))
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 if(conversationList.isEmpty()){
                     Text("No conversations found", modifier = Modifier.padding(16.dp))
                 }
                 else{
+                    Log.d("check","conversation list"+ conversationList.toString())
                     conversationList.forEach {
-                        Text(it.title, modifier = Modifier.padding(16.dp).clickable(onClick = { /*Todo*/ }) ,)
+                        Text(it.title, modifier = Modifier
+                            .padding(16.dp)
+                            .clickable(onClick = { thisConverastionId = it.conversationId.toLong();
+                                 //messages =  viewModel.getMessages(thisConverastionId)
+                                Log.d("check","message"+ messages.toString())
+
+
+                            Log.d("check","conversation id from drawer select"+thisConverastionId.toString())}) ,)
                     }
 
                 }
@@ -251,6 +286,34 @@ fun InteractionScreen(viewModel: chatBotVeiwModel) {
                             .padding(5.dp) // Apply padding from Scaffold
                             .padding(horizontal = 16.dp, vertical = 8.dp) // Additional padding for content
                     ) {
+                        Log.d("check","Real message from lazy column"+ Realmessages.toString())
+                        items(Realmessages.size) {
+                            Text(
+                                text = "Question : ${Realmessages[it].question}",
+                                modifier = Modifier.background(Color.LightGray),
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                //fontSize = 10.dp,
+                                //fontStyle = FontStyle.Normal,
+
+                                textAlign = TextAlign.Right
+                            )
+                             Spacer(modifier = Modifier.height(4.dp))
+                             HorizontalDivider(modifier = Modifier.height(3.dp),color = Color.White)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(text = Realmessages[it].answer,
+                                // text = "Question : $ShownQuestion",
+                                modifier = Modifier,
+                                color = Color.White,
+                                fontSize = 20.sp,
+                                //fontSize = 10.dp,
+                                //fontStyle = FontStyle.Normal,
+
+                                textAlign = TextAlign.Left)
+
+
+
+                        }
                         item {
                             Text(
                                 text = "Question : $ShownQuestion",
@@ -324,11 +387,24 @@ fun InteractionScreen(viewModel: chatBotVeiwModel) {
                             placeholder = { Text(text = "Type a question...") },
                             trailingIcon = {
                                 IconButton(onClick = {
+                                    if(thisConverastionId == 0L){
+                                        //val newConversation = Conversation(title = question)
+                                        thisConverastionId=viewModel.insertConversation(Conversation(title = question))
+                                        Log.d("check","conversation id from ui"+thisConverastionId.toString())
+                                        viewModel.getAnswer(currentModel, question,thisConverastionId)
+                                        ShownQuestion = question
+                                        question = ""
+
+
+                                    }
+                                    else{
+                                        viewModel.getAnswer(currentModel, question,thisConverastionId)
+                                        ShownQuestion = question
+                                        question = ""
+                                    }
                                     // TODO: Implement send action
                                     // viewModel.sendMessage(question, currentModel)
-                                    viewModel.getAnswer(currentModel, question)
-                                    ShownQuestion = question
-                                    question = "" // Clear input after sending
+                                    // Clear input after sending
                                 }) {
                                     Icon(
                                         imageVector = Icons.Default.Send,
