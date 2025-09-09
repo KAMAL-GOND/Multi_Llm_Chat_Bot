@@ -389,7 +389,7 @@ fun InteractionScreen(viewModel: chatBotVeiwModel) {
                                 IconButton(onClick = {
                                     if(thisConverastionId == 0L){
                                         //val newConversation = Conversation(title = question)
-                                        thisConverastionId=viewModel.insertConversation(Conversation(title = question))
+          //                              thisConverastionId=viewModel.insertConversation(Conversation(title = question))
                                         Log.d("check","conversation id from ui"+thisConverastionId.toString())
                                         viewModel.getAnswer(currentModel, question,thisConverastionId)
                                         ShownQuestion = question

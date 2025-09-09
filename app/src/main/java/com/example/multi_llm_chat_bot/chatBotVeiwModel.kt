@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.multi_llm_chat_bot.LocalStorage.AppDatabase
@@ -20,71 +21,77 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
+
 class chatBotVeiwModel(db: AppDatabase) : ViewModel() {
     var chatDao = db.chatDao()
-    // var chatbot1= AppDatabase.getDatabase(this.)
+    // Using a repository pattern is generally better, but for this fix, we'll keep direct DAO access.
 
-        val _state= MutableStateFlow(appState(
-            isLoading = false,
-            response = null,
-            error = null
-            //ideal = true
-        ))
-        val state= _state.asStateFlow()
-        var active=kotlinx.coroutines.Job(null)
-        fun getAnswer(model : String , question : String,conversationId : Long){
+    val _state= MutableStateFlow(appState(
+        isLoading = false,
+        response = null,
+        error = null
+        //ideal = true
+    ))
+    val state= _state.asStateFlow()
+    var active=kotlinx.coroutines.Job(null)
 
-            var active=viewModelScope.launch {
+    fun getAnswer(model : String , question : String, conversationId : Long) {
+
+        //active =
+            viewModelScope.launch { // Assign to 'active' Job for potential cancellation if needed
                 _state.update {
-                    it.copy(isLoading = true,)
+                    it.copy(isLoading = true)
                 }
-                while(true){
+                while (true) { // This loop needs a better exit condition, or it will retry indefinitely
                     try {
-                        var answer=KtorClient.request(model,question)
-                        _state.update { it.copy(
-                            isLoading = false,
-                            response = answer ,
-                            error = null
-                        )
-
+                        var answer = KtorClient.request(model, question)
+                        _state.update {
+                            it.copy(
+                                isLoading = false,
+                                response = answer,
+                                error = null
+                            )
                         }
-                        chatDao.insertChatMessage(ChatMessage(messageConversationId = conversationId, question = question, answer = answer.choices?.get(0)?.message?.content.toString()))
-                        //chatDao.insertConversation(Conversation(title = question))
-                        break
+                        // Ensure message is saved with the correct conversationId
+                        chatDao.insertChatMessage(
+                            ChatMessage(
+                                messageConversationId = conversationId,
+                                question = question,
+                                answer = answer.choices?.get(0)?.message?.content.toString()
+                            )
+                        )
+                        break // Exit loop on success
+                    } catch (e: Exception) {
+                        Log.e("ChatBotViewModel", "Error getting answer: ${e.message}")
+                        _state.update { it.copy(error = e.message, isLoading = false) }
                     }
-                    catch (e: Exception){
-                        _state.update { it.copy(error= e.message, isLoading = false) }
-                    }
-                    delay(60000)
+                    // Only retry if we actually want to. For now, commenting out the delay to avoid infinite retries.
+                    // delay(60000)
                 }
-
             }
+    }
 
-
-
-        }
     fun getAllConversation() = chatDao.getAllConversations()
-    fun insertConversation(conversation: Conversation) : Long {
-        var id = 0L
-        viewModelScope.launch {
-            id = chatDao.insertConversation(conversation)
-        }
-        return id
-    }
-    @Composable
-    fun getMessages(conversationId: Long):androidx.lifecycle.LiveData<List<ChatMessage>> {
-        var a =chatDao.getMessagesForConversation(conversationId)
-        Log.d("check","message view model"+a.observeAsState().toString())
-        return a
+
+    // Made suspend fun and returns the actual ID from the database
+    suspend fun insertConversation(conversation: Conversation) : Long {
+        return chatDao.insertConversation(conversation)
     }
 
+    // Removed @Composable annotation
+    fun getMessages(conversationId: Long): LiveData<List<ChatMessage>> {
+        return chatDao.getMessagesForConversation(conversationId)
     }
 
+}
 
-    data class appState(
-        var isLoading:Boolean=false,
-        var response : OpenRouterResponse?=null,
-        var error:String?=null,
-       // var ideal: Boolean=true
-         )
+
+data class appState(
+    var isLoading:Boolean=false,
+    var response : OpenRouterResponse?=null,
+    var error:String?=null,
+    // var ideal: Boolean=true
+)
+
+
 
