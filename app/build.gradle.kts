@@ -67,12 +67,12 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:+")
     implementation("io.ktor:ktor-client-logging-jvm:+")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
-    //implementation("androidx.compose.material3:material3:1.4.0-alpha14")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0") // Aligned with Kotlin version
     implementation("androidx.room:room-runtime:${room_version}")
     ksp("androidx.room:room-compiler:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:${room_version}")
+    implementation(libs.tasks.genai)
 
 
 }

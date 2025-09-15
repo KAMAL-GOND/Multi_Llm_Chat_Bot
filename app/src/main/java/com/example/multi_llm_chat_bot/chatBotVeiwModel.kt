@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.google.mediapipe.tasks.components.containers.NormalizedLandmarkList
 
 
 
@@ -83,12 +84,29 @@ class chatBotVeiwModel(db: AppDatabase) : ViewModel() {
         return chatDao.getMessagesForConversation(conversationId)
     }
 
+    val modelName ="gemma-2b-it-cpu-int4.tflite"
+    val options = LlmInference.Model.Options.builder()
+        .setModelPath(modelName)
+        // You can add other options here, e.g., temperature
+        .build()
+
+    // Create the LlmInference instance
+   var llmInference = LlmInference.createFromAsset(context, options)
+
+
 }
 
 
 data class appState(
     var isLoading:Boolean=false,
     var response : OpenRouterResponse?=null,
+    var error:String?=null,
+    // var ideal: Boolean=true
+)
+
+data class State(
+    var isLoading:Boolean=false,
+    var response : Any?=null,
     var error:String?=null,
     // var ideal: Boolean=true
 )
