@@ -77,7 +77,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewInteractionScreen(viewModel: chatBotVeiwModel) {
-    val models = listOf<String>("deepseek/deepseek-chat-v3-0324:free","deepseek/deepseek-r1:free","z-ai/glm-4.5-air:free","qwen/qwen3-coder:free","google/gemini-2.0-flash-exp:free","microsoft/mai-ds-r1:free","meta-llama/llama-3.3-70b-instruct:free","openai/gpt-oss-20b:free","google/gemma-3-27b-it:free")
+    val models = listOf<String>("deepseek/deepseek-chat-v3-0324:free","deepseek/deepseek-r1:free","z-ai/glm-4.5-air:free","qwen/qwen3-coder:free","google/gemini-2.0-flash-exp:free","microsoft/mai-ds-r1:free","meta-llama/llama-3.3-70b-instruct:free","openai/gpt-oss-20b:free","google/gemma-3-27b-it:free","Gemma:2B")
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val state by viewModel.state.collectAsState()

@@ -28,8 +28,9 @@ class MainActivity : ComponentActivity() {
         var db = AppDatabase.getDatabase(this)
         var chatDao = db.chatDao()
         enableEdgeToEdge()
+        var context = this.applicationContext
         //val scope= CoroutineScope(Dispatchers.IO)
-        val veiwModel= chatBotVeiwModel(db)
+        val veiwModel= chatBotVeiwModel(db,context)
        setContent {
            Multi_Llm_Chat_BotTheme {
                NewInteractionScreen(veiwModel)

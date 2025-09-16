@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import com.example.multi_llm_chat_bot.LocalStorage.ChatMessage
 import com.example.multi_llm_chat_bot.LocalStorage.Conversation
+import com.example.multi_llm_chat_bot.Model.OpenRouterResponse
 import com.example.multi_llm_chat_bot.chatBotVeiwModel
 import kotlinx.coroutines.launch
 
@@ -341,7 +342,8 @@ fun InteractionScreen(viewModel: chatBotVeiwModel) {
 
                             state.response != null -> {
                                 item {
-                                    Text(text = state.response!!.choices?.get(0)!!.message!!.content!!.toString(),
+                                    var answer = state.response as OpenRouterResponse
+                                    Text(text = answer!!.choices?.get(0)!!.message!!.content!!.toString(),
                                         // text = "Question : $ShownQuestion",
                                         modifier = Modifier,
                                         color = Color.White,
