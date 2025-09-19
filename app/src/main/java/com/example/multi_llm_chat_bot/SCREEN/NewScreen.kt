@@ -2,7 +2,16 @@ package com.example.multi_llm_chat_bot.SCREEN
 
 //package com.example.multi_llm_chat_bot.SCREEN
 
+import android.content.Context
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,6 +39,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.outlined.AccountBox
+import androidx.compose.material.icons.sharp.AddCircle
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,6 +52,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
@@ -49,6 +61,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,29 +75,68 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import com.example.multi_llm_chat_bot.LocalStorage.ChatMessage
 import com.example.multi_llm_chat_bot.LocalStorage.Conversation
 import com.example.multi_llm_chat_bot.R
 import com.example.multi_llm_chat_bot.chatBotVeiwModel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.jar.Manifest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewInteractionScreen(viewModel: chatBotVeiwModel) {
     val models = listOf<String>("deepseek/deepseek-chat-v3-0324:free","deepseek/deepseek-r1:free","z-ai/glm-4.5-air:free","qwen/qwen3-coder:free","google/gemini-2.0-flash-exp:free","microsoft/mai-ds-r1:free","meta-llama/llama-3.3-70b-instruct:free","openai/gpt-oss-20b:free","google/gemma-3-27b-it:free","Gemma:2B")
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
+    //val scope = rememberCoroutineScope()
     val state by viewModel.state.collectAsState()
     var question by remember { mutableStateOf("") }
     var currentModel by remember { mutableStateOf("google/gemini-2.0-flash-exp:free") } // Default model
     var ShownQuestion by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    var tempUri by remember{mutableStateOf<Uri?>(null)}
+    var CameraPhoto=rememberLauncherForActivityResult(contract = ActivityResultContracts.TakePicture(), onResult = {
+        if (it){
+            Toast.makeText(context, "Image Saved", Toast.LENGTH_SHORT).show()
+
+            // var biteformat= it.BitmapFactory()
+        }
+        else{
+            Toast.makeText(context, "Image Not Saved", Toast.LENGTH_SHORT).show()
+        }
+    })
+    var permission = rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission( )) {
+            isGranted: Boolean ->
+        if (isGranted) {
+            CameraPhoto.launch(Uri.parse("com.example.multi_llm_chat_bot"))
+        } else {
+            // Permission Denied: Do something
+            Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+
+    var galleryPhoto = rememberLauncherForActivityResult(contract = ActivityResultContracts.PickVisualMedia(), onResult ={
+            uri->
+        if(uri!=null){
+            tempUri=uri
+
+        }})
+
+    var modalSheetDrawer = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+    var showBottomSheet by remember { mutableStateOf(false) }
+
 
 
     val conversationList by viewModel.getAllConversation().observeAsState(emptyList())
@@ -153,7 +205,8 @@ fun NewInteractionScreen(viewModel: chatBotVeiwModel) {
                         readOnly = true,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp).background(color=MaterialTheme.colorScheme.onSurface),
+                            .padding(16.dp)
+                            .background(color = MaterialTheme.colorScheme.onSurface),
                         //readOnly = true,
 
                         trailingIcon = {
@@ -233,7 +286,8 @@ fun NewInteractionScreen(viewModel: chatBotVeiwModel) {
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable(onClick = {
-                                            thisConverastionId = conversation.conversationId.toLong()
+                                            thisConverastionId =
+                                                conversation.conversationId.toLong()
                                             scope.launch { drawerState.close() }
                                         })
                                         .padding(16.dp),
@@ -308,6 +362,65 @@ fun NewInteractionScreen(viewModel: chatBotVeiwModel) {
                 )
             }
         ) { paddingValues ->
+            if (showBottomSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showBottomSheet = false }, // Add this to allow closing the sheet
+                    sheetState = modalSheetDrawer
+                ) {
+                    // This is the content that was previously inside your ModalDrawerSheet
+                    Column(modifier = Modifier.padding(16.dp)) { // Added padding for better looks
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = {
+                                    scope.launch { modalSheetDrawer.hide() }.invokeOnCompletion {
+                                        if (!modalSheetDrawer.isVisible) {
+                                            showBottomSheet = false
+                                        }
+                                    }
+                                    // Camera logic here...
+                                    if (ContextCompat.checkSelfPermission(
+                                            context,
+                                            android.Manifest.permission.CAMERA
+                                        ) == PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        CameraPhoto.launch(Uri.parse("com.example.multi_llm_chat_bot"))
+                                    } else {
+                                        permission.launch(android.Manifest.permission.CAMERA)
+                                    }
+
+                                }),
+                            verticalAlignment = Alignment.CenterVertically // Center items vertically
+                        ) {
+                            Icon(imageVector = Icons.Filled.Add, contentDescription = "Camera")
+                            Spacer(modifier = Modifier.width(16.dp)) // Add space between icon and text
+                            Text("Camera")
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp)) // Add space between the rows
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(onClick = {
+                                    scope.launch { modalSheetDrawer.hide() }.invokeOnCompletion {
+                                        if (!modalSheetDrawer.isVisible) {
+                                            showBottomSheet = false
+                                        }
+                                    }
+                                    // Gallery logic here...
+                                    galleryPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) // Use a specific MIME type for images
+                                    //galleryPhoto.launch("image/*") // Use a specific MIME type for images
+                                }),
+                            verticalAlignment = Alignment.CenterVertically // Center items vertically
+                        ) {
+                            Icon(imageVector = Icons.Outlined.AccountBox, contentDescription = "Gallery")
+                            Spacer(modifier = Modifier.width(16.dp)) // Add space between icon and text
+                            Text("Gallery")
+                        }
+                    }
+                }
+            }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -447,6 +560,15 @@ fun NewInteractionScreen(viewModel: chatBotVeiwModel) {
                         onValueChange = { question = it },
                         modifier = Modifier.weight(1f),
                         placeholder = { Text("Type a message...") },
+                        leadingIcon = {IconButton (onClick={
+//                            scope.launch {
+//                                //drawerState.open()
+//                                modalSheetDrawer.show()
+//                            }
+                           showBottomSheet = true
+
+
+                        }) {Icon( Icons.Sharp.AddCircle, contentDescription = "Send")}},
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -478,3 +600,70 @@ fun NewInteractionScreen(viewModel: chatBotVeiwModel) {
         }
     }
 }
+
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun ImageLoader(context: Context):Uri?{
+//    val context = LocalContext.current
+//    var tempUri by remember{mutableStateOf<Uri?>(null)}
+//    var CameraPhoto=rememberLauncherForActivityResult(contract = ActivityResultContracts.TakePicture(), onResult = {
+//        if (it){
+//            Toast.makeText(context, "Image Saved", Toast.LENGTH_SHORT).show()
+//
+//            // var biteformat= it.BitmapFactory()
+//        }
+//        else{
+//            Toast.makeText(context, "Image Not Saved", Toast.LENGTH_SHORT).show()
+//        }
+//    })
+//    var permission = rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission( )) {
+//        isGranted: Boolean ->
+//        if (isGranted) {
+//            CameraPhoto.launch(Uri.parse("com.example.multi_llm_chat_bot"))
+//        } else {
+//            // Permission Denied: Do something
+//            Toast.makeText(context, "Permission Denied", Toast.LENGTH_SHORT).show()
+//        }
+//    }
+//
+//
+//
+//    var galleryPhoto = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent(), onResult ={
+//        uri->
+//    if(uri!=null){
+//        tempUri=uri
+//
+//    }})
+//
+//    var modalSheetDrawer = rememberModalBottomSheetState()
+//    val scope = rememberCoroutineScope()
+//    var showBottomSheet by remember { mutableStateOf(true) }
+//    if(showBottomSheet){
+//        ModalDrawerSheet {
+//            Column(modifier = Modifier.fillMaxHeight(0.3f)){
+//                Row(modifier = Modifier.fillMaxWidth().clickable(onClick = {
+//                    scope.launch { modalSheetDrawer.hide() }
+//                    if(ContextCompat.checkSelfPermission(context,android.Manifest.permission.CAMERA)== PackageManager.PERMISSION_GRANTED)
+//                    {
+//                        CameraPhoto.launch(Uri.parse("com.example.multi_llm_chat_bot"))
+//                    }
+//                    else{}
+//
+//                })){
+//                    Icon(imageVector = Icons.Filled.Add, contentDescription = "Add Image")
+//                    Text("camera")
+//                }
+//                Row(modifier = Modifier.fillMaxWidth().clickable(onClick = {
+//                    scope.launch { modalSheetDrawer.hide() }
+//                    //permission.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
+//                    galleryPhoto.launch((ActivityResultContracts.PickVisualMedia.ACTION_SYSTEM_FALLBACK_PICK_IMAGES))
+//                })){
+//                    Icon(imageVector = Icons.Outlined.AccountBox, contentDescription = "Add Image")
+//                    Text("Gallery")
+//                }
+//            }
+//        }
+//    }
+//    return tempUri
+//
+//}
